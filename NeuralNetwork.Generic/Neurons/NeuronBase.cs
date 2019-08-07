@@ -1,5 +1,6 @@
 ﻿using System;
 using Framework.Generic.Utility;
+using NeuralNetwork.Generic.Connections;
 
 namespace NeuralNetwork.Generic.Neurons
 {
@@ -16,6 +17,11 @@ namespace NeuralNetwork.Generic.Neurons
         public double Bias { get; set; }
 
         public INeuronConnection[] Connections { get; set; }
+
+        public NeuronBase()
+        {
+
+        }
 
         public NeuronBase(INeuronConnection[] connections)
         {

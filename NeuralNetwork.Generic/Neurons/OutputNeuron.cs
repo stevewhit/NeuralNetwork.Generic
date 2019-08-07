@@ -1,30 +1,26 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Linq;
+using NeuralNetwork.Generic.Connections;
 
 namespace NeuralNetwork.Generic.Neurons
 {
     public interface IOutputNeuron : INeuron
     {
-        IIncomingNeuronConnection[] GetIncomingConnections();
+        IIncomingConnection[] GetIncomingConnections();
     }
 
     public class OutputNeuron : NeuronBase, IOutputNeuron
     {
         public OutputNeuron()
-            : base(null)
         {
 
         }
 
-        public OutputNeuron(IOutgoingNeuronConnection[] connections)
+        public OutputNeuron(IIncomingConnection[] connections)
             : base(connections)
         {
 
         }
 
-        public IIncomingNeuronConnection[] GetIncomingConnections() => Connections?.OfType<IIncomingNeuronConnection>().ToArray();
+        public IIncomingConnection[] GetIncomingConnections() => Connections?.OfType<IIncomingConnection>().ToArray();
     }
 }

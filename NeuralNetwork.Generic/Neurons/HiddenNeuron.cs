@@ -1,28 +1,28 @@
-﻿using System.Linq;
+﻿using NeuralNetwork.Generic.Connections;
+using System.Linq;
 
 namespace NeuralNetwork.Generic.Neurons
 {
     public interface IHiddenNeuron : INeuron
     {
-        IOutgoingNeuronConnection[] GetOutgoingConnections();
-        IIncomingNeuronConnection[] GetIncomingConnections();
+        IOutgoingConnection[] GetOutgoingConnections();
+        IIncomingConnection[] GetIncomingConnections();
     }
 
     public class HiddenNeuron : NeuronBase, IHiddenNeuron
     {
         public HiddenNeuron()
-            : base(null)
         {
 
         }
 
-        public HiddenNeuron(IOutgoingNeuronConnection[] connections)
+        public HiddenNeuron(IOutgoingConnection[] connections)
             : base(connections)
         {
 
         }
 
-        public IOutgoingNeuronConnection[] GetOutgoingConnections() => Connections?.OfType<IOutgoingNeuronConnection>().ToArray();
-        public IIncomingNeuronConnection[] GetIncomingConnections() => Connections?.OfType<IIncomingNeuronConnection>().ToArray();
+        public IOutgoingConnection[] GetOutgoingConnections() => Connections?.OfType<IOutgoingConnection>().ToArray();
+        public IIncomingConnection[] GetIncomingConnections() => Connections?.OfType<IIncomingConnection>().ToArray();
     }
 }
