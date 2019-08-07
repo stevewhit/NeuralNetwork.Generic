@@ -41,7 +41,27 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Connections\OutgoingConnection.cs" />
+    <Compile Include="Connections\IncomingConnection.cs" />
+    <Compile Include="Connections\NeuronConnectionBase.cs" />
+    <Compile Include="Layers\HiddenLayer.cs" />
+    <Compile Include="Layers\OutputLayer.cs" />
+    <Compile Include="Layers\InputLayer.cs" />
+    <Compile Include="Layers\NetworkLayerBase.cs" />
+    <Compile Include="Networks\DFFNeuralNetwork.cs" />
+    <Compile Include="Networks\NeuralNetworkBase.cs" />
+    <Compile Include="Neurons\HiddenNeuron.cs" />
+    <Compile Include="Neurons\InputNeuron.cs" />
+    <Compile Include="Neurons\NeuronBase.cs" />
+    <Compile Include="Neurons\OutputNeuron.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <ProjectReference Include="..\..\Framework.Generic\Framework.Generic\Framework.Generic.csproj">
+      <Project>{90236CE3-7B97-457A-8BC2-9ACAED973488}</Project>
+      <Name>Framework.Generic</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
