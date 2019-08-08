@@ -1,11 +1,12 @@
 ﻿using NeuralNetwork.Generic.Connections;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace NeuralNetwork.Generic.Neurons
 {
     public interface IInputNeuron : INeuron
     {
-        IOutgoingConnection[] GetOutgoingConnections();
+        IEnumerable<IOutgoingConnection> GetOutgoingConnections();
     }
 
     public class InputNeuron : NeuronBase, IInputNeuron
@@ -15,12 +16,12 @@ namespace NeuralNetwork.Generic.Neurons
 
         }
 
-        public InputNeuron(IOutgoingConnection[] connections)
+        public InputNeuron(IEnumerable<IOutgoingConnection> connections)
             : base(connections)
         {
 
         }
         
-        public IOutgoingConnection[] GetOutgoingConnections() => Connections?.OfType<IOutgoingConnection>().ToArray();
+        public IEnumerable<IOutgoingConnection> GetOutgoingConnections() => Connections?.OfType<IOutgoingConnection>();
     }
 }

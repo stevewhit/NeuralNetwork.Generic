@@ -1,19 +1,20 @@
 ﻿using System;
 using NeuralNetwork.Generic.Neurons;
 using Framework.Generic.Utility;
+using System.Collections.Generic;
 
 namespace NeuralNetwork.Generic.Layers
 {
     public interface INetworkLayer : IDisposable
     {
-        INeuron[] Neurons { get; set; }
+        IEnumerable<INeuron> Neurons { get; set; }
     }
 
     public abstract class NetworkLayerBase : INetworkLayer
     {
-        public INeuron[] Neurons { get; set; }
+        public IEnumerable<INeuron> Neurons { get; set; }
 
-        public NetworkLayerBase(INeuron[] neurons)
+        public NetworkLayerBase(IEnumerable<INeuron> neurons)
         {
             Neurons = neurons;
         }

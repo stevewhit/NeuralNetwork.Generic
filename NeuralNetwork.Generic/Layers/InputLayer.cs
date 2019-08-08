@@ -1,4 +1,5 @@
 ﻿using NeuralNetwork.Generic.Neurons;
+using System.Collections.Generic;
 
 namespace NeuralNetwork.Generic.Layers
 {
@@ -9,7 +10,7 @@ namespace NeuralNetwork.Generic.Layers
 
     public class InputLayer : NetworkLayerBase, IInputLayer
     {
-        public InputLayer(IInputNeuron[] inputNeurons)
+        public InputLayer(IEnumerable<IInputNeuron> inputNeurons)
            : base(inputNeurons)
         {
 

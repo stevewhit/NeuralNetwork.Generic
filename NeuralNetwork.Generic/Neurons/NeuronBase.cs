@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using Framework.Generic.Utility;
 using NeuralNetwork.Generic.Connections;
 
@@ -8,7 +9,7 @@ namespace NeuralNetwork.Generic.Neurons
     {
         double ActivationLevel { get; set; }
         double Bias { get; set; }
-        INeuronConnection[] Connections { get; set; }
+        IEnumerable<INeuronConnection> Connections { get; set; }
     }
 
     public abstract class NeuronBase : INeuron
@@ -16,14 +17,14 @@ namespace NeuralNetwork.Generic.Neurons
         public double ActivationLevel { get; set; }
         public double Bias { get; set; }
 
-        public INeuronConnection[] Connections { get; set; }
+        public IEnumerable<INeuronConnection> Connections { get; set; }
 
         public NeuronBase()
         {
 
         }
 
-        public NeuronBase(INeuronConnection[] connections)
+        public NeuronBase(IEnumerable<INeuronConnection> connections)
         {
             Connections = connections; 
         }
