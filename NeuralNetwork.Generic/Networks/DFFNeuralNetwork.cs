@@ -26,26 +26,22 @@ namespace NeuralNetwork.Generic.Networks
     /// </summary>
     public class DFFNeuralNetwork : NeuralNetworkBase, IDFFNeuralNetwork
     {
+        /// <summary>
+        /// The learning rate of the network
+        /// </summary>
+        private const double _dampingRate = 0.01;
+
         public DFFNeuralNetwork(INetworkLayer[] layers)
             : base(layers)
         {
 
         }
+        
+        public IEnumerable<IHiddenLayer> GetHiddenLayers() => Layers?.OfType<IHiddenLayer>();
 
-        public IEnumerable<IHiddenLayer> GetHiddenLayers()
-        {
-            return Layers?.OfType<IHiddenLayer>();
-        }
+        public IInputLayer GetInputLayer() => Layers?.OfType<IInputLayer>().FirstOrDefault();
 
-        public IInputLayer GetInputLayer()
-        {
-            return Layers?.OfType<IInputLayer>().FirstOrDefault();
-        }
-
-        public IOutputLayer GetOutputLayer()
-        {
-            return Layers?.OfType<IOutputLayer>().FirstOrDefault();
-        }
+        public IOutputLayer GetOutputLayer() => Layers?.OfType<IOutputLayer>().FirstOrDefault();
 
         /// <summary>
         /// Randomizes all neuron activation levels, biases, and connection weights.
@@ -78,7 +74,7 @@ namespace NeuralNetwork.Generic.Networks
             ForwardPropogate();
         }
 
-        private void ForwardPropogate()
+        private void ForwardPropogateInputs(IDictionary<double, INeuron> neuronInputs)
         {
             // Step through each layer's neurons and update the activation levels
             foreach (var layer in Layers.Where(l => !(l is IInputLayer)) ?? new List<INetworkLayer>())
@@ -103,6 +99,17 @@ namespace NeuralNetwork.Generic.Networks
             return (1.0 / (1 + Math.Exp(-1.0 * value)));
         }
 
+        private double ApplySigmoidFunctionInverse(double value)
+        {
+            // check this calculation.
+            return Math.Log(value / (1 - value));
+        }
+
+        private double ApplySigmoidFunctionDerivative(double value)
+        {
+            return value * (1.0 - value);
+        }
+
         private void AssignActivationsToNeurons(IList<double> inputActivations)
         {
             var inputLayerNeurons = GetInputLayer()?.Neurons;
@@ -118,10 +125,68 @@ namespace NeuralNetwork.Generic.Networks
             }
         }
 
-        private void BackwardPropogateCosts()
+        public void BackPropogateCosts(IList<double> costs)
         {
-            // Will have to determine if we should be calculating costs here OR if they should be supplied as arguments.
-            // Also, consider how I will be storing/retrieving cost / change info for each neuron.
-        }
+            // Dictionary holding the derivative of the cost with respect to the activation of the previous neuron.
+            // This is used so that as we go right-to-left, we are able to retrieve the cost derivate of the previous 
+            // neuron on the right.
+            var dC0_daLPlus1Dict = new Dictionary<INeuron, double>();
+
+            foreach (var networkLayer in SortedNetworkLayers.Reverse())
+            {
+                foreach (var neuron in networkLayer.RegisteredNeurons)
+                {
+                    // The activation level for this neuron   
+                    var aL = neuron.ActivationLevel;
+
+                    // The Intermediate value 'Z' --> the neuron's activation level without applying the activation function.
+                    var zL = ApplySigmoidFunctionInverse(neuron.ActivationLevel);
+
+                    // The expected output of the neuron (This value is ignored if the neuron doesn't belong to the output layer).
+                    var yL = networkLayer is OutputLayer ?
+                                    expectedNeuronOutputsDict[neuron] :
+                                    0.1234;
+
+                    // The derivative of the cost with respect to the activation of this neuron. 
+                    var dC0_daL = networkLayer is OutputLayer ?
+                                                2.0 * (aL - yL) :
+                                                dC0_daLPlus1Dict[neuron];
+
+                    // The derivative of the activation level of this neuron with respect to Z.
+                    var daL_dzL = ApplySigmoidFunctionDerivative(zL);
+
+                    // The derivative of the cost with respect to the bias of this neuron.
+                    // Update the bias of the neuron using this calculation.
+                    var dC0_dbL = 1.0 * daL_dzL * dC0_daL;
+                    neuron.Bias -= dC0_dbL * _dampingRate;
+
+                    // The derivative of the cost with respect to the activation of the neuron on the left.
+                    // To calculate this, compute the derivative of EACH incoming connection and add it 
+                    // to this total. The derivative of the sum is the sum of the derivatives.
+                    var dC0_daLMinus1Total = 0.0;
+
+                    foreach (var incomingConnection in neuron.IncomingConnections)
+                    {
+                        // The derivative of Z with respect to the incoming connection weight.
+                        var dzL_dwL = incomingConnection.FromNeuron.ActivationLevel;
+
+                        // The derivative of the cost with respect to the incoming connection weight.
+                        var dC0_dwL = dzL_dwL * daL_dzL * dC0_daL;
+
+                        // The derivative of Z with respect to the activation of the incoming connection neuron.  
+                        // Update the weight of the incoming connection with this calculation.
+                        var dzL_daLMinus1 = incomingConnection.Weight;
+                        incomingConnection.Weight -= dC0_dwL * _dampingRate;
+
+                        // The derivative of the cost with respect to the activation of the incoming connection neuron. 
+                        // Add is value to the total derivative calculation for this neuron.
+                        var dC0_daLMinus1 = dzL_daLMinus1 * daL_dzL * dC0_daL;
+                        dC0_daLMinus1Total += dC0_daLMinus1;
+                    }
+
+                    dC0_daLPlus1Dict.Add(neuron, dC0_daLMinus1Total);
+                }
+            }
+        } 
     }
 }

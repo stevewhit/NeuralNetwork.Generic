@@ -8,15 +8,19 @@ namespace NeuralNetwork.Generic.Layers
     public interface INetworkLayer : IDisposable
     {
         IEnumerable<INeuron> Neurons { get; set; }
+        int SortOrder { get; set; }
     }
 
     public abstract class NetworkLayerBase : INetworkLayer
     {
         public IEnumerable<INeuron> Neurons { get; set; }
 
-        public NetworkLayerBase(IEnumerable<INeuron> neurons)
+        public int SortOrder { get; set; }
+
+        public NetworkLayerBase(IEnumerable<INeuron> neurons, int sortOrder)
         {
             Neurons = neurons;
+            SortOrder = sortOrder;
         }
 
         #region IDisposable
