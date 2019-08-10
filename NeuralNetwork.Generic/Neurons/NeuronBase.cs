@@ -1,33 +1,71 @@
 ﻿using System;
 using System.Collections.Generic;
-using Framework.Generic.Utility;
+using System.Linq;
 using NeuralNetwork.Generic.Connections;
 
 namespace NeuralNetwork.Generic.Neurons
 {
     public interface INeuron : IDisposable
     {
+        /// <summary>
+        /// The activation level of this neuron.
+        /// </summary>
         double ActivationLevel { get; set; }
+
+        /// <summary>
+        /// The bias of this neuron.
+        /// </summary>
         double Bias { get; set; }
-        IEnumerable<INeuronConnection> Connections { get; set; }
+
+        /// <summary>
+        /// The description of this neuron.
+        /// </summary>
+        string Description { get; set; }
+
+        /// <summary>
+        /// The connections to this neuron.
+        /// </summary>
+        IList<INeuronConnection> Connections { get; set; }
     }
 
     public abstract class NeuronBase : INeuron
     {
+        /// <summary>
+        /// The activation level of this neuron.
+        /// </summary>
         public double ActivationLevel { get; set; }
+
+        /// <summary>
+        /// The bias of this neuron.
+        /// </summary>
         public double Bias { get; set; }
 
-        public IEnumerable<INeuronConnection> Connections { get; set; }
+        /// <summary>
+        /// The description of this neuron.
+        /// </summary>
+        public string Description { get; set; }
+
+        /// <summary>
+        /// The connections to this neuron.
+        /// </summary>
+        public IList<INeuronConnection> Connections { get; set; }
 
         public NeuronBase()
         {
-
+            Connections = new List<INeuronConnection>();
         }
+                
+        /// <summary>
+        /// Returns all outgoing connections to this neuron.
+        /// </summary>
+        /// <returns>Returns all outgoing connections for this neuron.</returns>
+        public IEnumerable<IOutgoingConnection> GetOutgoingConnections() => Connections?.OfType<IOutgoingConnection>();
 
-        public NeuronBase(IEnumerable<INeuronConnection> connections)
-        {
-            Connections = connections; 
-        }
+        /// <summary>
+        /// Returns all incoming connections to this neuron.
+        /// </summary>
+        /// <returns></returns>
+        public IEnumerable<IIncomingConnection> GetIncomingConnections() => Connections?.OfType<IIncomingConnection>();
 
         #region IDisposable
         private bool disposed = false;
@@ -38,7 +76,6 @@ namespace NeuralNetwork.Generic.Neurons
                 if (disposing)
                 {
                     // Free managed objects
-                    Connections?.Dispose();
                     Connections = null;
                 }
 

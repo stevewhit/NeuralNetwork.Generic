@@ -10,8 +10,8 @@ namespace NeuralNetwork.Generic.Layers
 
     public class OutputLayer : NetworkLayerBase, IOutputLayer
     {
-        public OutputLayer(IEnumerable<IOutputNeuron> outputNeurons)
-           : base(outputNeurons)
+        public OutputLayer(IEnumerable<IOutputNeuron> outputNeurons, int sortOrder)
+           : base(outputNeurons, sortOrder)
         {
 
         }

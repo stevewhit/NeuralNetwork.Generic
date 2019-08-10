@@ -1,43 +1,24 @@
-﻿using System;
-
+﻿
 namespace NeuralNetwork.Generic.Connections
 {
-    public interface INeuronConnection : IDisposable
+    public interface INeuronConnection
     {
+        /// <summary>
+        /// The weight of the connection.
+        /// </summary>
         double Weight { get; set; }
     }
 
     public abstract class NeuronConnectionBase
     {
+        /// <summary>
+        /// The weight of the connection.
+        /// </summary>
         public double Weight { get; set; }
 
         public NeuronConnectionBase()
         {
 
         }
-
-        #region IDisposable
-        private bool disposed = false;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposing)
-                {
-                    // Free managed objects
-                }
-
-                // Free unmanaged objects
-            }
-
-            disposed = true;
-        }
-
-        public virtual void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 }
