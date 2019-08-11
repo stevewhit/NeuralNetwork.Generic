@@ -49,9 +49,18 @@
     <Reference Include="System.Core" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Builders\FakeNeuralNetwork.cs" />
     <Compile Include="Builders\FakeNeuron.cs" />
+    <Compile Include="Builders\FakeNeuronConnection.cs" />
+    <Compile Include="Builders\FakeNeuronLayer.cs" />
     <Compile Include="Connections\IncomingConnectionTest.cs" />
     <Compile Include="Connections\OutgoingConnectionTest.cs" />
+    <Compile Include="Connections\NeuronConnectionBase.cs" />
+    <Compile Include="Layers\NetworkLayerBaseTest.cs" />
+    <Compile Include="Layers\InputLayerTest.cs" />
+    <Compile Include="Layers\HiddenLayerTest.cs" />
+    <Compile Include="Layers\OutputLayerTest.cs" />
+    <Compile Include="Networks\NeuralNetworkBaseTest.cs" />
     <Compile Include="Neurons\InputNeuronTest.cs" />
     <Compile Include="Neurons\HiddenNeuronTest.cs" />
     <Compile Include="Neurons\OutputNeuronTest.cs" />

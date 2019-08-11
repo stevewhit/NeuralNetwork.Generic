@@ -5,7 +5,7 @@ using NeuralNetwork.Generic.Connections;
 
 namespace NeuralNetwork.Generic.Neurons
 {
-    public interface INeuron : IDisposable
+    public interface INeuron
     {
         /// <summary>
         /// The activation level of this neuron.
@@ -66,30 +66,5 @@ namespace NeuralNetwork.Generic.Neurons
         /// </summary>
         /// <returns></returns>
         public IEnumerable<IIncomingConnection> GetIncomingConnections() => Connections?.OfType<IIncomingConnection>();
-
-        #region IDisposable
-        private bool disposed = false;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposing)
-                {
-                    // Free managed objects
-                    Connections = null;
-                }
-
-                // Free unmanaged objects
-            }
-
-            disposed = true;
-        }
-
-        public virtual void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 }

@@ -1,47 +1,31 @@
-﻿using Framework.Generic.Utility;
-using NeuralNetwork.Generic.Layers;
-using System;
+﻿using NeuralNetwork.Generic.Layers;
+using System.Collections.Generic;
 
 namespace NeuralNetwork.Generic.Networks
 {
-    public interface INeuralNetwork : IDisposable
+    public interface INeuralNetwork
     {
-        INetworkLayer[] Layers { get; set; }
+        /// <summary>
+        /// The layers in this neural network.
+        /// </summary>
+        IEnumerable<INetworkLayer> Layers { get; set; }
     }
 
     public abstract class NeuralNetworkBase : INeuralNetwork
     {
-        public INetworkLayer[] Layers { get; set; }
+        /// <summary>
+        /// The layers in this neural network.
+        /// </summary>
+        public IEnumerable<INetworkLayer> Layers { get; set; }
 
-        public NeuralNetworkBase(INetworkLayer[] layers)
+        public NeuralNetworkBase()
+        {
+            Layers = new List<INetworkLayer>();
+        }
+
+        public NeuralNetworkBase(IEnumerable<INetworkLayer> layers)
         {
             Layers = layers;
         }
-        
-        #region IDisposable
-        private bool disposed = false;
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposed)
-            {
-                if (disposing)
-                {
-                    // Free managed objects
-                    Layers.Dispose();
-                    Layers = null;
-                }
-
-                // Free unmanaged objects
-            }
-
-            disposed = true;
-        }
-
-        public virtual void Dispose()
-        {
-            Dispose(true);
-            GC.SuppressFinalize(this);
-        }
-        #endregion
     }
 }

@@ -10,8 +10,14 @@ namespace NeuralNetwork.Generic.Layers
 
     public class InputLayer : NetworkLayerBase, IInputLayer
     {
-        public InputLayer(IEnumerable<IInputNeuron> inputNeurons, int sortOrder)
-           : base(inputNeurons, sortOrder)
+        public InputLayer(int sortOrder)
+            : base(sortOrder)
+        {
+
+        }
+
+        public InputLayer(int sortOrder, IEnumerable<IInputNeuron> inputNeurons)
+           : base(sortOrder, inputNeurons)
         {
 
         }

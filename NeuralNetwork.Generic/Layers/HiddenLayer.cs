@@ -10,8 +10,14 @@ namespace NeuralNetwork.Generic.Layers
 
     public class HiddenLayer : NetworkLayerBase, IHiddenLayer
     {
-        public HiddenLayer(IEnumerable<IHiddenNeuron> hiddenNeurons, int sortOrder)
-           : base(hiddenNeurons, sortOrder)
+        public HiddenLayer(int sortOrder)
+           : base(sortOrder)
+        {
+
+        }
+
+        public HiddenLayer(int sortOrder, IEnumerable<IHiddenNeuron> hiddenNeurons)
+           : base(sortOrder, hiddenNeurons)
         {
 
         }
