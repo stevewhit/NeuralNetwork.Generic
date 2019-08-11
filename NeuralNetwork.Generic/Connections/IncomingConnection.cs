@@ -5,13 +5,16 @@ namespace NeuralNetwork.Generic.Connections
     public interface IIncomingConnection : INeuronConnection
     {
         /// <summary>
-        /// The neuron that is initiating the connection.
+        /// The neuron that this connection is coming from.
         /// </summary>
         INeuron FromNeuron { get; set; }
     }
 
     public class IncomingConnection : NeuronConnectionBase, IIncomingConnection
     {
+        /// <summary>
+        /// The neuron that this connection is coming from.
+        /// </summary>
         public INeuron FromNeuron { get; set; }
 
         public IncomingConnection()

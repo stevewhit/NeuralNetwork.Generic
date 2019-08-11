@@ -5,7 +5,7 @@ namespace NeuralNetwork.Generic.Connections
     public interface IOutgoingConnection : INeuronConnection
     {
         /// <summary>
-        /// The neuron that is being connected to.
+        /// The neuron that this connection is going to.
         /// </summary>
         INeuron ToNeuron { get; set; }
     }
@@ -13,7 +13,7 @@ namespace NeuralNetwork.Generic.Connections
     public class OutgoingConnection : NeuronConnectionBase, IOutgoingConnection
     {
         /// <summary>
-        /// The neuron that is being connected to.
+        /// The neuron that this connection is going to.
         /// </summary>
         public INeuron ToNeuron { get; set; }
 
