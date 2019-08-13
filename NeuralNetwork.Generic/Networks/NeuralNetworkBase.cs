@@ -1,4 +1,5 @@
-﻿using NeuralNetwork.Generic.Layers;
+﻿using NeuralNetwork.Generic.Datasets;
+using NeuralNetwork.Generic.Layers;
 using System.Collections.Generic;
 
 namespace NeuralNetwork.Generic.Networks
@@ -27,5 +28,9 @@ namespace NeuralNetwork.Generic.Networks
         {
             Layers = layers;
         }
+
+        protected abstract void ValidateNetwork();
+        protected abstract void ValidateNetworkInputs(IEnumerable<INeuronInput> networkInputs);
+        protected abstract void ValidateNetworkOutputs(IEnumerable<INeuronOutput> networkOutputs);
     }
 }

@@ -44,6 +44,12 @@
     <Compile Include="Connections\OutgoingConnection.cs" />
     <Compile Include="Connections\IncomingConnection.cs" />
     <Compile Include="Connections\NeuronConnectionBase.cs" />
+    <Compile Include="Datasets\NeuronOutput.cs" />
+    <Compile Include="Datasets\NeuronInput.cs" />
+    <Compile Include="Datasets\TrainingDataset.cs" />
+    <Compile Include="Datasets\TrainingEntry.cs" />
+    <Compile Include="Datasets\TrainingNeuronInput.cs" />
+    <Compile Include="Datasets\TrainingNeuronOutput.cs" />
     <Compile Include="Layers\HiddenLayer.cs" />
     <Compile Include="Layers\OutputLayer.cs" />
     <Compile Include="Layers\InputLayer.cs" />
