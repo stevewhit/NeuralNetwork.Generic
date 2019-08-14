@@ -70,6 +70,7 @@ namespace NeuralNetwork.Generic.Networks
         public DFFNeuralNetwork(int inputLayerNeuronCount, int hiddenLayersCount, int hiddenLayerNeuronCount, int outputLayerNeuronCount)
         {
             InitializeNetwork(inputLayerNeuronCount, hiddenLayersCount, hiddenLayerNeuronCount, outputLayerNeuronCount);
+            ValidateNetwork();
         }
 
         /// <summary>
@@ -94,7 +95,7 @@ namespace NeuralNetwork.Generic.Networks
                 outputNeurons.Add(new OutputNeuron() { Id = inputLayerNeuronCount + (hiddenLayersCount * hiddenLayerNeuronCount) + i - 1 });
 
             // Setup hidden layer(s) with the appropriate number of neurons.
-            for (int hlayer = 0; hlayer <= hiddenLayersCount; hlayer++)
+            for (int hlayer = 0; hlayer < hiddenLayersCount; hlayer++)
             {
                 var hiddenLayerNeurons = new List<IHiddenNeuron>();
                 for (int hlayerNeuron = 0; hlayerNeuron < hiddenLayerNeuronCount; hlayerNeuron++)
@@ -102,42 +103,38 @@ namespace NeuralNetwork.Generic.Networks
                     var hiddenNeuronId = inputLayerNeuronCount + (hlayer * hiddenLayerNeuronCount) + hlayerNeuron;
                     var hiddenNeuron = new HiddenNeuron() { Id = hiddenNeuronId };
                     hiddenLayerNeurons.Add(hiddenNeuron);
-
+                    
                     if (hlayer == 0)
-                    {
                         // Generate connections to input layer
                         foreach (var inputNeuron in inputNeurons)
                             hiddenNeuron.GenerateConnectionsWith(inputNeuron);
-                    }
-                    else if (hlayer == hiddenLayersCount + 1)
-                    {
+                    else
+                        // Generate connections to the previous hidden layer.
+                        foreach (IHiddenNeuron prevLayerNeuron in hiddenLayers[hlayer - 1].Neurons)
+                            hiddenNeuron.GenerateConnectionsWith(prevLayerNeuron);
+                    
+                    if (hlayer == hiddenLayersCount - 1)
                         // Generate connections to output layer
                         foreach (var outputNeuron in outputNeurons)
                             hiddenNeuron.GenerateConnectionsWith(outputNeuron);
-                    }
-                    else
-                    {
-                        // Generate connections to the previous hidden layer.
-                        foreach (IHiddenNeuron prevLayerNeuron in hiddenLayers[hlayer].Neurons)
-                            hiddenNeuron.GenerateConnectionsWith(prevLayerNeuron);
-                    }
                 }
                 
                 hiddenLayers.Add(new HiddenLayer(hlayer + 1, hiddenLayerNeurons));
             }
-            
-            var layers = new List<INetworkLayer>()
+
+            var layers = new List<INetworkLayer>() { new InputLayer(0, inputNeurons), new OutputLayer(hiddenLayersCount + 1, outputNeurons) };
+
+            if (!hiddenLayers.Any())
             {
-                new InputLayer(0, inputNeurons),
-                new OutputLayer(hiddenLayersCount + 1, outputNeurons)
-            };
-            
-            if (hiddenLayers.Any())
+                // Generate connections from input layer to output layer if there are no hidden layers
+                foreach (var inputNeuron in inputNeurons)
+                    foreach (var outputNeuron in outputNeurons)
+                        inputNeuron.GenerateConnectionsWith(outputNeuron);
+            }
+            else
                 layers.AddRange(hiddenLayers);
 
             Layers = layers;
-
-            ValidateNetwork();
         }
 
         /// <summary>
@@ -370,10 +367,10 @@ namespace NeuralNetwork.Generic.Networks
                 throw new InvalidOperationException("Network has not been initialized with layers.");
 
             if (Layers.Count(l => l is IInputLayer) != 1)
-                throw new InvalidOperationException("Network should contain one input layer.");
+                throw new InvalidOperationException("Network should contain exactly one input layer.");
 
             if (Layers.Count(l => l is IOutputLayer) != 1)
-                throw new InvalidOperationException("Network should contain one output layer.");
+                throw new InvalidOperationException("Network should contain exactly one output layer.");
 
             foreach (var layer in Layers)
             {
@@ -384,6 +381,9 @@ namespace NeuralNetwork.Generic.Networks
                 {
                     if (neuron == null)
                         throw new InvalidOperationException("Network contains null neuron(s).");
+
+                    if (neuron.Connections == null || !neuron.Connections.Any())
+                        throw new InvalidOperationException("Neuron contains null or invalid connections.");
 
                     if (layer is IInputLayer && !(neuron is IInputNeuron))
                         throw new InvalidOperationException("Input layer contains neuron(s) that aren't input neurons.");
@@ -402,15 +402,14 @@ namespace NeuralNetwork.Generic.Networks
                         if (connection == null)
                             throw new InvalidOperationException("Network contains null connection(s).");
 
-                        if (neuron is IInputNeuron && (!(connection is IOutgoingConnection) || ((IOutgoingConnection)connection).ToNeuron == null))
+                        if (neuron is IInputNeuron && !(connection is IOutgoingConnection))
                             throw new InvalidOperationException("Input neuron contains connection(s) that aren't outgoing or are invalid.");
 
-                        else if (neuron is IOutputNeuron && (!(connection is IIncomingConnection) || ((IIncomingConnection)connection).FromNeuron == null))
+                        else if (neuron is IOutputNeuron && !(connection is IIncomingConnection))
                             throw new InvalidOperationException("Input neuron contains connection(s) that aren't outgoing or are invalid.");
 
-                        else if (neuron is IHiddenNeuron &&
-                            ((connection is IIncomingConnection && ((IIncomingConnection)connection).FromNeuron == null) ||
-                             (connection is IOutgoingConnection && ((IOutgoingConnection)connection).ToNeuron == null)))
+                        else if ((connection is IIncomingConnection && ((IIncomingConnection)connection).FromNeuron == null) ||
+                                (connection is IOutgoingConnection && ((IOutgoingConnection)connection).ToNeuron == null))
                             throw new InvalidOperationException("Hidden neuron contains connection(s) that are invalid.");
                     }
                 }

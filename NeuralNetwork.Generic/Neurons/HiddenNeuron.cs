@@ -26,6 +26,12 @@ namespace NeuralNetwork.Generic.Neurons
         void GenerateConnectionsWith(IInputNeuron neuron);
 
         /// <summary>
+        /// Creates the incoming and outgoing connections between this neuron and a previous hidden neuron.
+        /// </summary>
+        /// <param name="incomingNeuron">The incoming neuron to connect this neuron to.</param>
+        void GenerateConnectionsWith(IHiddenNeuron incomingNeuron);
+
+        /// <summary>
         /// Creates the incoming and outgoing connections between this neuron and a output neuron.
         /// </summary>
         /// <param name="neuron">The output neuron to connect this neuron to.</param>
@@ -58,21 +64,21 @@ namespace NeuralNetwork.Generic.Neurons
         }
 
         /// <summary>
-        /// Creates the incoming and outgoing connections between this neuron and a hidden neuron.
+        /// Creates the incoming and outgoing connections between this neuron and a previous hidden neuron.
         /// </summary>
-        /// <param name="neuron">The output neuron to connect this neuron to.</param>
-        public void GenerateConnectionsWith(IHiddenNeuron neuron)
+        /// <param name="incomingNeuron">The incoming neuron to connect this neuron to.</param>
+        public void GenerateConnectionsWith(IHiddenNeuron incomingNeuron)
         {
-            if (neuron == null)
-                throw new ArgumentNullException("neuron");
+            if (incomingNeuron == null)
+                throw new ArgumentNullException("incomingNeuron");
 
-            // Create connection only if this neuron doesn't already have an outgoing connection to the hidden neuron.
-            if (!GetOutgoingConnections().Any(c => c.ToNeuron == neuron))
-                Connections.Add(new OutgoingConnection(neuron));
+            // Create connection only if this neuron doesn't already have an incoming connection from the incoming hidden neuron.
+            if (!GetIncomingConnections().Any(c => c.FromNeuron == incomingNeuron))
+                Connections.Add(new IncomingConnection(incomingNeuron));
 
-            // Create connection only if the hidden neuron doesn't already have an incoming connection from this neuron.
-            if (!neuron.GetIncomingConnections().Any(c => c.FromNeuron == this))
-                neuron.Connections.Add(new IncomingConnection(this));
+            // Create connection only if the incoming hidden neuron doesn't already have an outgoing connection to this neuron.
+            if (!incomingNeuron.GetOutgoingConnections().Any(c => c.ToNeuron == this))
+                incomingNeuron.Connections.Add(new OutgoingConnection(this));
         }
 
         /// <summary>

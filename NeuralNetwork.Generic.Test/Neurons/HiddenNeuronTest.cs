@@ -101,6 +101,83 @@ namespace NeuralNetwork.Generic.Test.Neurons
         }
 
         #endregion
+        #region Testing void GenerateConnectionsWith(IHiddenNeuron neuron)...
+
+        [TestMethod]
+        [ExpectedException(typeof(ArgumentNullException))]
+        public void GenerateConnectionsWith_WithNullNeuronHidden_ThrowsException()
+        {
+            // Act
+            _hiddenNeuron.GenerateConnectionsWith((IHiddenNeuron)null);
+        }
+
+        [TestMethod]
+        public void GenerateConnectionsWith_WithExistingConnectionHidden_DoesNotAddNewIncomingConnection()
+        {
+            // Arrange
+            var incomingHiddenNeuron = new HiddenNeuron();
+
+            // Act
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+
+            // Assert
+            Assert.IsTrue(_hiddenNeuron.GetIncomingConnections().Count() == 1);
+        }
+
+        [TestMethod]
+        public void GenerateConnectionsWith_WithoutConnectionHidden_CreatesIncomingConnection()
+        {
+            // Arrange
+            var incomingHiddenNeuron = new HiddenNeuron();
+
+            // Act
+            var connectionsBefore = _hiddenNeuron.GetIncomingConnections().Count();
+
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+
+            // Assert
+            Assert.IsTrue(connectionsBefore == 0);
+            Assert.IsTrue(_hiddenNeuron.GetIncomingConnections().Count() == 1);
+            Assert.IsTrue(_hiddenNeuron.GetIncomingConnections().First().FromNeuron == incomingHiddenNeuron);
+        }
+
+        [TestMethod]
+        public void GenerateConnectionsWith_WithExistingConnectionHidden_DoesNotAddNewOutgoingConnection()
+        {
+            // Arrange
+            var incomingHiddenNeuron = new HiddenNeuron();
+
+            // Act
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+
+            // Assert
+            Assert.IsTrue(incomingHiddenNeuron.GetOutgoingConnections().Count() == 1);
+        }
+
+        [TestMethod]
+        public void GenerateConnectionsWith_WithoutConnectionHidden_CreatesOutgoingConnection()
+        {
+            // Arrange
+            var incomingHiddenNeuron = new HiddenNeuron();
+
+            // Act
+            var connectionsBefore = incomingHiddenNeuron.GetOutgoingConnections().Count();
+
+            _hiddenNeuron.GenerateConnectionsWith(incomingHiddenNeuron);
+
+            // Assert
+            Assert.IsTrue(connectionsBefore == 0);
+            Assert.IsTrue(incomingHiddenNeuron.GetOutgoingConnections().Count() == 1);
+            Assert.IsTrue(incomingHiddenNeuron.GetOutgoingConnections().First().ToNeuron == _hiddenNeuron);
+        }
+
+        #endregion
         #region Testing void GenerateConnectionsWith(IOutputNeuron neuron)...
 
         [TestMethod]
