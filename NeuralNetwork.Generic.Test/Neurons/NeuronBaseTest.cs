@@ -24,11 +24,13 @@ namespace NeuralNetwork.Generic.Test.Neurons
         public void GetSetProperties()
         {
             // Arrange
+            _neuron.Id = 3;
             _neuron.ActivationLevel = .75;
             _neuron.Bias = .33;
             _neuron.Description = "Fake Neuron";
 
             // Assert
+            Assert.IsTrue(_neuron.Id == 3);
             Assert.IsTrue(_neuron.ActivationLevel == .75);
             Assert.IsTrue(_neuron.Bias == .33);
             Assert.IsTrue(_neuron.Description == "Fake Neuron");

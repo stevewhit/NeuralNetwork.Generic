@@ -2,9 +2,11 @@
 using NeuralNetwork.Generic.Layers;
 using NeuralNetwork.Generic.Networks;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 
 namespace NeuralNetwork.Generic.Test.Builders
 {
+    [ExcludeFromCodeCoverage]
     public class FakeNeuralNetwork : NeuralNetworkBase
     {
         public FakeNeuralNetwork()
@@ -23,12 +25,12 @@ namespace NeuralNetwork.Generic.Test.Builders
             throw new System.NotImplementedException();
         }
 
-        protected override void ValidateNetworkInputs(IEnumerable<INeuronInput> networkInputs)
+        protected override void ValidateNetworkInputs(IEnumerable<INetworkInput> networkInputs)
         {
             throw new System.NotImplementedException();
         }
 
-        protected override void ValidateNetworkOutputs(IEnumerable<INeuronOutput> networkOutputs)
+        protected override void ValidateNetworkOutputs(IEnumerable<INetworkOutput> networkOutputs)
         {
             throw new System.NotImplementedException();
         }

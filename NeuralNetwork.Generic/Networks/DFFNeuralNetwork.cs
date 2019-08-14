@@ -23,19 +23,20 @@ namespace NeuralNetwork.Generic.Networks
         /// Trains the network with the supplied <paramref name="dataset"/>.
         /// </summary>
         /// <param name="dataset">Contains the data entries that will be used to train this network.</param>
-        void Train(ITrainingDataset dataset);
+        /// <returns>Returns the cost of all training iterations.</returns>
+        IEnumerable<double> Train(INetworkTrainingDataset dataset);
 
         /// <summary>
         /// Applies the set of <paramref name="neuronInputs"/> to the input layer of the network and performs all calculations to generate an output.
         /// </summary>
         /// <param name="neuronInputs">A dictionary of inputs that will be applied to the network. The INeuron key values must contain ALL input neurons for the network.</param>
-        IEnumerable<INeuronOutput> ApplyInputs(IEnumerable<INeuronInput> networkInputs);
+        IEnumerable<INetworkOutput> ApplyInputs(IEnumerable<INetworkInput> networkInputs);
 
         /// <summary>
         /// Returns the current neuron activation levels.
         /// </summary>
         /// <returns>Returns the current neuron activation levels as an enumerable.</returns>
-        IEnumerable<INeuronOutput> GetNeuronOutputs();
+        IEnumerable<INetworkOutput> GetNeuronOutputs();
     }
 
     /// <summary>
@@ -52,11 +53,91 @@ namespace NeuralNetwork.Generic.Networks
         {
             Layers = new List<INetworkLayer>();
         }
-
+        
         public DFFNeuralNetwork(IEnumerable<INetworkLayer> layers)
             : base(layers)
         {
             Layers = layers;
+        }
+        
+        /// <summary>
+        /// Initializes this network with input, output, and hidden layers where the layers contain the specified number of neurons.
+        /// </summary>
+        /// <param name="inputLayerNeuronCount">The number of neurons put in the input layer.</param>
+        /// <param name="hiddenLayersCount">The number of hidden layers in the network.</param>
+        /// <param name="hiddenLayerNeuronCount">The number of neurons put in each hidden layer.</param>
+        /// <param name="outputLayerNeuronCount">The number of neurons put in the output layer.</param>
+        public DFFNeuralNetwork(int inputLayerNeuronCount, int hiddenLayersCount, int hiddenLayerNeuronCount, int outputLayerNeuronCount)
+        {
+            InitializeNetwork(inputLayerNeuronCount, hiddenLayersCount, hiddenLayerNeuronCount, outputLayerNeuronCount);
+        }
+
+        /// <summary>
+        /// Initializes this network with input, output, and hidden layers where the layers contain the specified number of neurons.
+        /// </summary>
+        /// <param name="inputLayerNeuronCount">The number of neurons put in the input layer.</param>
+        /// <param name="hiddenLayersCount">The number of hidden layers in the network.</param>
+        /// <param name="hiddenLayerNeuronCount">The number of neurons put in each hidden layer.</param>
+        /// <param name="outputLayerNeuronCount">The number of neurons put in the output layer.</param>
+        private void InitializeNetwork(int inputLayerNeuronCount, int hiddenLayersCount, int hiddenLayerNeuronCount, int outputLayerNeuronCount)
+        {
+            var inputNeurons = new List<IInputNeuron>();
+            var outputNeurons = new List<IOutputNeuron>();
+            var hiddenLayers = new List<IHiddenLayer>();
+
+            // Setup input layer
+            for (int i = 0; i < inputLayerNeuronCount; i++)
+                inputNeurons.Add(new InputNeuron() { Id = i });
+            
+            // Setup output layer
+            for (int i = 0; i < outputLayerNeuronCount; i++)
+                outputNeurons.Add(new OutputNeuron() { Id = inputLayerNeuronCount + (hiddenLayersCount * hiddenLayerNeuronCount) + i - 1 });
+
+            // Setup hidden layer(s) with the appropriate number of neurons.
+            for (int hlayer = 0; hlayer <= hiddenLayersCount; hlayer++)
+            {
+                var hiddenLayerNeurons = new List<IHiddenNeuron>();
+                for (int hlayerNeuron = 0; hlayerNeuron < hiddenLayerNeuronCount; hlayerNeuron++)
+                {
+                    var hiddenNeuronId = inputLayerNeuronCount + (hlayer * hiddenLayerNeuronCount) + hlayerNeuron;
+                    var hiddenNeuron = new HiddenNeuron() { Id = hiddenNeuronId };
+                    hiddenLayerNeurons.Add(hiddenNeuron);
+
+                    if (hlayer == 0)
+                    {
+                        // Generate connections to input layer
+                        foreach (var inputNeuron in inputNeurons)
+                            hiddenNeuron.GenerateConnectionsWith(inputNeuron);
+                    }
+                    else if (hlayer == hiddenLayersCount + 1)
+                    {
+                        // Generate connections to output layer
+                        foreach (var outputNeuron in outputNeurons)
+                            hiddenNeuron.GenerateConnectionsWith(outputNeuron);
+                    }
+                    else
+                    {
+                        // Generate connections to the previous hidden layer.
+                        foreach (IHiddenNeuron prevLayerNeuron in hiddenLayers[hlayer].Neurons)
+                            hiddenNeuron.GenerateConnectionsWith(prevLayerNeuron);
+                    }
+                }
+                
+                hiddenLayers.Add(new HiddenLayer(hlayer + 1, hiddenLayerNeurons));
+            }
+            
+            var layers = new List<INetworkLayer>()
+            {
+                new InputLayer(0, inputNeurons),
+                new OutputLayer(hiddenLayersCount + 1, outputNeurons)
+            };
+            
+            if (hiddenLayers.Any())
+                layers.AddRange(hiddenLayers);
+
+            Layers = layers;
+
+            ValidateNetwork();
         }
 
         /// <summary>
@@ -87,27 +168,41 @@ namespace NeuralNetwork.Generic.Networks
         /// Trains the network with the supplied <paramref name="dataset"/>.
         /// </summary>
         /// <param name="dataset">Contains the data entries that will be used to train this network.</param>
-        public void Train(ITrainingDataset dataset)
+        /// <returns>Returns the cost of all training iterations.</returns>
+        public IEnumerable<double> Train(INetworkTrainingDataset dataset)
         {
             if (dataset == null)
                 throw new ArgumentNullException("dataset");
 
             ValidateNetwork();
             ValidateTrainingDataset(dataset);
-            
-            foreach (var entry in dataset.Entries)
+
+            var costs = new List<double>();
+                        
+            foreach (var entry in dataset.TestCases)
             {
                 // Push the inputs through the network.
                 ForwardPropogateInputs(entry.Inputs);
 
-                // Read the outputs and calculate costs
-                // here
+                // Store the calculated cost 
+                costs.Add(CalculateCost(entry));
 
                 // Pull the changes back through the network
                 BackPropogateOutputs(entry.Outputs);
-                
-                // Calculate and return average activation cost.
             }
+
+            return costs;
+        }
+
+        /// <summary>
+        /// Returns the quadratic cost of the test case for all inputs using:
+        /// Cost = 1/2 * ((Expected - Actual)^2)
+        /// </summary>
+        /// <param name="testCase">The training iteration to calculate the cost for.</param>
+        /// <returns>Returns the cost of the training iteration.</returns>
+        private double CalculateCost(INetworkTrainingIteration testCase)
+        {
+            return testCase.Outputs.Average(t => .5 * Math.Pow(t.ExpectedActivationLevel - t.ActivationLevel, 2));
         }
 
         /// <summary>
@@ -115,7 +210,7 @@ namespace NeuralNetwork.Generic.Networks
         /// </summary>
         /// <param name="networkInputs">The inputs to be applied to the network.</param>
         /// <returns>Returns the current neuron activation levels as an enumerable after the inputs have been applied.</returns>
-        public IEnumerable<INeuronOutput> ApplyInputs(IEnumerable<INeuronInput> networkInputs)
+        public IEnumerable<INetworkOutput> ApplyInputs(IEnumerable<INetworkInput> networkInputs)
         {
             ValidateNetwork();
             ValidateNetworkInputs(networkInputs);
@@ -129,13 +224,13 @@ namespace NeuralNetwork.Generic.Networks
         /// Returns the current neuron activation levels.
         /// </summary>
         /// <returns>Returns the current neuron activation levels as an enumerable.</returns>
-        public IEnumerable<INeuronOutput> GetNeuronOutputs()
+        public IEnumerable<INetworkOutput> GetNeuronOutputs()
         {
             var outputNeurons = Layers?.OfType<IOutputLayer>()?.FirstOrDefault()?.Neurons;
-            return outputNeurons?.Select(n => new NeuronOutput()
+            return outputNeurons?.Select(n => new NetworkOutput()
             {
-                Neuron = n as IOutputNeuron,
-                ExpectedActivationLevel = n.ActivationLevel
+                NeuronId = n.Id,
+                ActivationLevel = n.ActivationLevel
             });
         }
 
@@ -144,16 +239,16 @@ namespace NeuralNetwork.Generic.Networks
         /// </summary>
         /// <param name="inputs">The inputs to be applied to the network.</param>
         /// <param name="validateNetwork">Bool to indicate whether the network should be verified before propogating. This is used to help performance since this method will be called many times.</param>
-        private void ForwardPropogateInputs(IEnumerable<INeuronInput> networkInputs)
+        private void ForwardPropogateInputs(IEnumerable<INetworkInput> networkInputs)
         {
-            // Verify each input & apply activations to input layer neurons.
+            var inputLayer = Layers.OfType<IInputLayer>().First();
+
+            // Apply activation levels to input layer neurons.
             foreach (var input in networkInputs)
-            {
-                input.Neuron.ActivationLevel = input.ActivationLevel;
-            }
-            
+                GetNeuronById(input.NeuronId, inputLayer).ActivationLevel = input.ActivationLevel;
+
             // Step through each layer's neurons and update the activation levels
-            foreach (var layer in Layers.Where(l => l != Layers.OfType<IInputLayer>().FirstOrDefault()).OrderBy(l => l.SortOrder))
+            foreach (var layer in Layers.Where(l => l != inputLayer).OrderBy(l => l.SortOrder))
             {
                 foreach (var neuron in layer.Neurons)
                 {
@@ -169,13 +264,14 @@ namespace NeuralNetwork.Generic.Networks
         }
         
         /// <summary>
-        /// 
+        /// Calculates and applies weight and bias changes to each of the neuron connection and biases based on the
+        /// difference between the <paramref name="expectedOutputs"/> and the actual network outputs.
         /// </summary>
-        /// <param name="networkOutputs"></param>
-        private void BackPropogateOutputs(IList<ITrainingNeuronOutput> trainingOutputs)
+        /// <param name="expectedOutputs">A list of the expected activation levels from the associated training iteration.</param>
+        private void BackPropogateOutputs(IList<INetworkTrainingOutput> expectedOutputs)
         {
-            if (trainingOutputs == null)
-                throw new ArgumentNullException("trainingOutputs");
+            if (expectedOutputs == null)
+                throw new ArgumentNullException("expectedOutputs");
 
             // Dictionary holding the derivative of the cost with respect to the activation of the previous neuron.
             // This is used so that as we go right-to-left, we are able to retrieve the cost derivate of the previous 
@@ -194,7 +290,7 @@ namespace NeuralNetwork.Generic.Networks
 
                     // The derivative of the cost with respect to the activation of this neuron. 
                     // This calculation changes if the neuron is in the output layer.
-                    var dC0_daL = layer is OutputLayer ? 2.0 * (aL - trainingOutputs.First(o => o.Neuron == neuron).ExpectedActivationLevel) : dC0_daLPlus1Dict[neuron];
+                    var dC0_daL = layer is OutputLayer ? 2.0 * (aL - expectedOutputs.First(o => o.NeuronId == neuron.Id).ExpectedActivationLevel) : dC0_daLPlus1Dict[neuron];
 
                     // The derivative of the activation level of this neuron with respect to Z.
                     var daL_dzL = ApplySigmoidFunctionDerivative(zL);
@@ -320,51 +416,86 @@ namespace NeuralNetwork.Generic.Networks
                 }
             }
         }
-
+        
         /// <summary>
-        /// 
+        /// Validates that the supplied <paramref name="networkInputs"/> can be applied to this network.
         /// </summary>
-        /// <param name="networkInputs"></param>
-        protected override void ValidateNetworkInputs(IEnumerable<INeuronInput> networkInputs)
+        /// <param name="networkInputs">The network inputs that should be applied to the input layer of this network.</param>
+        protected override void ValidateNetworkInputs(IEnumerable<INetworkInput> networkInputs)
         {
             if (networkInputs == null || !networkInputs.Any())
                 throw new ArgumentNullException("inputs");
 
+            var inputLayer = Layers.OfType<IInputLayer>().First();
+            var inputLayerNeurons = inputLayer.Neurons;
+            var inputNeuronIds = networkInputs.Select(n => n.NeuronId).Distinct();
+
             // Verify there is one input for each input neuron.
-            var inputLayer = Layers.OfType<IInputLayer>().FirstOrDefault();
-            if (inputLayer.Neurons.Except(networkInputs.Select(i => i.Neuron)).Any())
+            if (inputLayerNeurons.Count() != inputNeuronIds.Count())
                 throw new ArgumentException("There should be one input value for each input neuron of the network.");
+
+            // Verify neuron ids are valid.
+            foreach (var neuronId in inputNeuronIds)
+            {
+                if (GetNeuronById(neuronId, inputLayer) == null)
+                    throw new ArgumentException($"NetworkInputs contains an invalid neuron id: {neuronId}.");
+            }
         }
 
         /// <summary>
-        /// 
+        /// Validates that the supplied <paramref name="networkOutputs"/> can be applied to this network.
         /// </summary>
-        /// <param name="networkOutputs"></param>
-        protected override void ValidateNetworkOutputs(IEnumerable<INeuronOutput> networkOutputs)
+        /// <param name="networkOutputs">The network outputs for output layer of this network.</param>
+        protected override void ValidateNetworkOutputs(IEnumerable<INetworkOutput> networkOutputs)
         {
             if (networkOutputs == null || !networkOutputs.Any())
                 throw new ArgumentNullException("networkOutputs");
 
+            var outputLayer = Layers.OfType<IOutputLayer>().First();
+            var outputLayerNeurons = outputLayer.Neurons;
+            var outputNeuronIds = networkOutputs.Select(n => n.NeuronId).Distinct();
+
             // Verify there is one output for each output neuron.
-            var outputLayer = Layers.OfType<IOutputLayer>().FirstOrDefault();
-            if (outputLayer.Neurons.Except(networkOutputs.Select(i => i.Neuron)).Any())
+            if (outputLayerNeurons.Count() != outputNeuronIds.Count())
                 throw new ArgumentException("There should be one output value for each output neuron of the network.");
+
+            // Verify neuron ids are valid.
+            foreach (var neuronId in outputNeuronIds)
+            {
+                if (GetNeuronById(neuronId, outputLayer) == null)
+                    throw new ArgumentException($"NetworkOutputs contains an invalid neuron id: {neuronId}.");
+            }
         }
 
         /// <summary>
-        /// 
+        /// Validates each of the dataset entries has valid input and outputs for this network.
         /// </summary>
-        /// <param name="dataset"></param>
-        protected void ValidateTrainingDataset(ITrainingDataset dataset)
+        /// <param name="dataset">The dataset that will be applied to this network.</param>
+        protected void ValidateTrainingDataset(INetworkTrainingDataset dataset)
         {
-            if (dataset == null || !dataset.Entries.Any())
+            if (dataset == null || !dataset.TestCases.Any())
                 throw new ArgumentNullException("dataset");
 
-            foreach (var entry in dataset.Entries)
+            foreach (var entry in dataset.TestCases)
             {
                 ValidateNetworkInputs(entry.Inputs);
                 ValidateNetworkOutputs(entry.Outputs);
             }
+        }
+
+        /// <summary>
+        /// Returns the neuron in the <paramref name="layer"/> with the matching <paramref name="neuronId"/> if one exists; otherwise null.
+        /// </summary>
+        /// <param name="neuronId">The id of the neuron to return.</param>
+        /// <param name="layer">The network layer that the neuron exists in.</param>
+        /// <returns>Returns the neuron in the <paramref name="layer"/> with the matching <paramref name="neuronId"/> if one exists; otherwise null.</returns>
+        private INeuron GetNeuronById(int neuronId, INetworkLayer layer)
+        {
+            foreach (var neuron in layer.Neurons)
+                if (neuron.Id == neuronId)
+                    return neuron;
+
+            return null;
         }
     }
 }

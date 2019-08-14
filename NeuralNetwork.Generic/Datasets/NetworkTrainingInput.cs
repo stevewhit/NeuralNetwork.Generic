@@ -6,12 +6,13 @@ using System.Threading.Tasks;
 
 namespace NeuralNetwork.Generic.Datasets
 {
-    public interface ITrainingNeuronInput : INeuronInput
+    public interface INetworkTrainingInput : INetworkInput
     {
 
     }
-    public class TrainingNeuronInput : NeuronInput, ITrainingNeuronInput
-    {
 
+    public class NetworkTrainingInput : NetworkInput
+    {
+        
     }
 }

@@ -58,6 +58,24 @@ namespace NeuralNetwork.Generic.Neurons
         }
 
         /// <summary>
+        /// Creates the incoming and outgoing connections between this neuron and a hidden neuron.
+        /// </summary>
+        /// <param name="neuron">The output neuron to connect this neuron to.</param>
+        public void GenerateConnectionsWith(IHiddenNeuron neuron)
+        {
+            if (neuron == null)
+                throw new ArgumentNullException("neuron");
+
+            // Create connection only if this neuron doesn't already have an outgoing connection to the hidden neuron.
+            if (!GetOutgoingConnections().Any(c => c.ToNeuron == neuron))
+                Connections.Add(new OutgoingConnection(neuron));
+
+            // Create connection only if the hidden neuron doesn't already have an incoming connection from this neuron.
+            if (!neuron.GetIncomingConnections().Any(c => c.FromNeuron == this))
+                neuron.Connections.Add(new IncomingConnection(this));
+        }
+
+        /// <summary>
         /// Creates the incoming and outgoing connections between this neuron and a output neuron.
         /// </summary>
         /// <param name="neuron">The output neuron to connect this neuron to.</param>

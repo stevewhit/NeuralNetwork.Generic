@@ -1,5 +1,4 @@
-﻿using NeuralNetwork.Generic.Neurons;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,15 +6,13 @@ using System.Threading.Tasks;
 
 namespace NeuralNetwork.Generic.Datasets
 {
-    public interface INeuronOutput
+    public interface INetworkTrainingOutput : INetworkOutput
     {
         double ExpectedActivationLevel { get; set; }
-        IOutputNeuron Neuron { get; set; }
     }
 
-    public class NeuronOutput : INeuronOutput
+    public class NetworkTrainingOutput : NetworkOutput
     {
         public double ExpectedActivationLevel { get; set; }
-        public IOutputNeuron Neuron { get; set; }
     }
 }

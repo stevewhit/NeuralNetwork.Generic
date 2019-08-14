@@ -61,6 +61,7 @@
     <Compile Include="Layers\HiddenLayerTest.cs" />
     <Compile Include="Layers\OutputLayerTest.cs" />
     <Compile Include="Networks\NeuralNetworkBaseTest.cs" />
+    <Compile Include="Networks\DFFNeuralNetworkTest.cs" />
     <Compile Include="Neurons\InputNeuronTest.cs" />
     <Compile Include="Neurons\HiddenNeuronTest.cs" />
     <Compile Include="Neurons\OutputNeuronTest.cs" />
@@ -71,6 +72,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\Framework.Generic\Framework.Generic\Framework.Generic.csproj">
+      <Project>{90236CE3-7B97-457A-8BC2-9ACAED973488}</Project>
+      <Name>Framework.Generic</Name>
+    </ProjectReference>
     <ProjectReference Include="..\NeuralNetwork.Generic\NeuralNetwork.Generic.csproj">
       <Project>{a5b43882-b231-404b-82fe-c5f5e0dc15d2}</Project>
       <Name>NeuralNetwork.Generic</Name>

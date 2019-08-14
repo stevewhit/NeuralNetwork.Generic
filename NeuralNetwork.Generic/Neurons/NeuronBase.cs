@@ -8,6 +8,11 @@ namespace NeuralNetwork.Generic.Neurons
     public interface INeuron
     {
         /// <summary>
+        /// The id of the neuron.
+        /// </summary>
+        int Id { get; set; }
+
+        /// <summary>
         /// The activation level of this neuron.
         /// </summary>
         double ActivationLevel { get; set; }
@@ -30,6 +35,11 @@ namespace NeuralNetwork.Generic.Neurons
 
     public abstract class NeuronBase : INeuron
     {
+        /// <summary>
+        /// The id of the neuron.
+        /// </summary>
+        public int Id { get; set; }
+
         /// <summary>
         /// The activation level of this neuron.
         /// </summary>

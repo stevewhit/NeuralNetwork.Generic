@@ -30,7 +30,7 @@ namespace NeuralNetwork.Generic.Networks
         }
 
         protected abstract void ValidateNetwork();
-        protected abstract void ValidateNetworkInputs(IEnumerable<INeuronInput> networkInputs);
-        protected abstract void ValidateNetworkOutputs(IEnumerable<INeuronOutput> networkOutputs);
+        protected abstract void ValidateNetworkInputs(IEnumerable<INetworkInput> networkInputs);
+        protected abstract void ValidateNetworkOutputs(IEnumerable<INetworkOutput> networkOutputs);
     }
 }
