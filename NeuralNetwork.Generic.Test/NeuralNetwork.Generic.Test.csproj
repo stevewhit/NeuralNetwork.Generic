@@ -62,6 +62,7 @@
     <Compile Include="Layers\OutputLayerTest.cs" />
     <Compile Include="Networks\NeuralNetworkBaseTest.cs" />
     <Compile Include="Networks\DFFNeuralNetworkTest.cs" />
+    <Compile Include="Networks\FakeNNApp.cs" />
     <Compile Include="Neurons\InputNeuronTest.cs" />
     <Compile Include="Neurons\HiddenNeuronTest.cs" />
     <Compile Include="Neurons\OutputNeuronTest.cs" />
@@ -83,6 +84,7 @@
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\tools\Build-Cleanup-Targets.targets" />
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>

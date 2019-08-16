@@ -20,11 +20,11 @@ namespace NeuralNetwork.Generic.Networks
         void RandomizeNetwork();
 
         /// <summary>
-        /// Trains the network with the supplied <paramref name="dataset"/>.
+        /// Trains the network with the supplied <paramref name="trainingIterations"/>.
         /// </summary>
-        /// <param name="dataset">Contains the data entries that will be used to train this network.</param>
-        /// <returns>Returns the cost of all training iterations.</returns>
-        IEnumerable<double> Train(INetworkTrainingDataset dataset);
+        /// <param name="trainingIterations">Contains the data entries that will be used to train this network.</param>
+        /// <returns>Returns the training iterations with updated training costs.</returns>
+        IEnumerable<INetworkTrainingIteration> Train(IEnumerable<INetworkTrainingIteration> trainingIterations);
 
         /// <summary>
         /// Applies the set of <paramref name="neuronInputs"/> to the input layer of the network and performs all calculations to generate an output.
@@ -92,7 +92,7 @@ namespace NeuralNetwork.Generic.Networks
             
             // Setup output layer
             for (int i = 0; i < outputLayerNeuronCount; i++)
-                outputNeurons.Add(new OutputNeuron() { Id = inputLayerNeuronCount + (hiddenLayersCount * hiddenLayerNeuronCount) + i - 1 });
+                outputNeurons.Add(new OutputNeuron() { Id = inputLayerNeuronCount + (hiddenLayersCount * hiddenLayerNeuronCount) + i });
 
             // Setup hidden layer(s) with the appropriate number of neurons.
             for (int hlayer = 0; hlayer < hiddenLayersCount; hlayer++)
@@ -146,60 +146,68 @@ namespace NeuralNetwork.Generic.Networks
 
             foreach (var layer in Layers)
             {
-                foreach (var neuron in layer?.Neurons)
+                foreach (var neuron in layer.Neurons)
                 {
                     // Randomize neuron activation levels & biases
-                    neuron.ActivationLevel = NumberUtils.GenerateRandomNumber(-100, 100) / 100.0;
-                    neuron.Bias = NumberUtils.GenerateRandomNumber(-100, 100) / 100.0;
+                    neuron.ActivationLevel = NumberUtils.GenerateRandomNumber(0, 100) / 100.0;
+                    neuron.Bias = NumberUtils.GenerateRandomNumber(0, 100) / 100.0;
 
-                    foreach (var outConnection in neuron?.Connections?.OfType<IOutgoingConnection>())
+                    // Randomize all incoming and outgoing connection weights
+                    foreach (var outgoingConnection in neuron.Connections.OfType<IOutgoingConnection>())
                     {
-                        // Randomize all output connection weights
-                        outConnection.Weight = NumberUtils.GenerateRandomNumber(-100, 100) / 100.0;
+                        outgoingConnection.Weight = NumberUtils.GenerateRandomNumber(0, 100) / 100.0;
+
+                        foreach (var incomingConnection in outgoingConnection.ToNeuron.Connections.OfType<IIncomingConnection>())
+                        {
+                            if (incomingConnection.FromNeuron.Id == neuron.Id)
+                                incomingConnection.Weight = outgoingConnection.Weight;
+                        }
                     }
                 }
             }
         }
 
         /// <summary>
-        /// Trains the network with the supplied <paramref name="dataset"/>.
+        /// Trains the network with the supplied <paramref name="trainingIterations"/>.
         /// </summary>
-        /// <param name="dataset">Contains the data entries that will be used to train this network.</param>
-        /// <returns>Returns the cost of all training iterations.</returns>
-        public IEnumerable<double> Train(INetworkTrainingDataset dataset)
+        /// <param name="trainingIterations">Contains the data entries that will be used to train this network.</param>
+        /// <returns>Returns the training iterations with updated training costs.</returns>
+        public IEnumerable<INetworkTrainingIteration> Train(IEnumerable<INetworkTrainingIteration> trainingIterations)
         {
-            if (dataset == null)
-                throw new ArgumentNullException("dataset");
-
             ValidateNetwork();
-            ValidateTrainingDataset(dataset);
-
-            var costs = new List<double>();
-                        
-            foreach (var entry in dataset.TestCases)
+            ValidateTrainingIterations(trainingIterations);
+            
+            foreach (var entry in trainingIterations)
             {
                 // Push the inputs through the network.
                 ForwardPropogateInputs(entry.Inputs);
 
                 // Store the calculated cost 
-                costs.Add(CalculateCost(entry));
+                entry.TrainingCost = CalculateCost(entry);
 
                 // Pull the changes back through the network
                 BackPropogateOutputs(entry.Outputs);
             }
 
-            return costs;
+            return trainingIterations;
         }
 
         /// <summary>
         /// Returns the quadratic cost of the test case for all inputs using:
-        /// Cost = 1/2 * ((Expected - Actual)^2)
+        /// Cost = ((Expected - Actual)^2) ==> Take the average of all costs.
         /// </summary>
         /// <param name="testCase">The training iteration to calculate the cost for.</param>
         /// <returns>Returns the cost of the training iteration.</returns>
         private double CalculateCost(INetworkTrainingIteration testCase)
         {
-            return testCase.Outputs.Average(t => .5 * Math.Pow(t.ExpectedActivationLevel - t.ActivationLevel, 2));
+            var neuronOutputs = GetNeuronOutputs();
+            testCase.Outputs.ForEach(t => 
+            {
+                // Update the actual activation level of each test case.
+                t.ActivationLevel = neuronOutputs.First(n => n.NeuronId == t.NeuronId).ActivationLevel;
+            });
+
+            return testCase.Outputs.Average(t => Math.Pow(t.ActivationLevel - t.ExpectedActivationLevel, 2));
         }
 
         /// <summary>
@@ -223,12 +231,16 @@ namespace NeuralNetwork.Generic.Networks
         /// <returns>Returns the current neuron activation levels as an enumerable.</returns>
         public IEnumerable<INetworkOutput> GetNeuronOutputs()
         {
-            var outputNeurons = Layers?.OfType<IOutputLayer>()?.FirstOrDefault()?.Neurons;
-            return outputNeurons?.Select(n => new NetworkOutput()
-            {
-                NeuronId = n.Id,
-                ActivationLevel = n.ActivationLevel
-            });
+            var outputLayers = Layers?.OfType<IOutputLayer>();
+            return outputLayers == null || !outputLayers.Any() ? 
+                        null : 
+                        outputLayers.Where(l => l.Neurons != null)
+                                    .SelectMany(l => l.Neurons.Where(outputNeuron => outputNeuron != null)
+                                                              .Select(outputNeuron => new NetworkOutput()
+                                                              {
+                                                                  NeuronId = outputNeuron.Id,
+                                                                  ActivationLevel = outputNeuron.ActivationLevel
+                                                              }));
         }
 
         /// <summary>
@@ -242,7 +254,9 @@ namespace NeuralNetwork.Generic.Networks
 
             // Apply activation levels to input layer neurons.
             foreach (var input in networkInputs)
+            {
                 GetNeuronById(input.NeuronId, inputLayer).ActivationLevel = input.ActivationLevel;
+            }
 
             // Step through each layer's neurons and update the activation levels
             foreach (var layer in Layers.Where(l => l != inputLayer).OrderBy(l => l.SortOrder))
@@ -255,7 +269,7 @@ namespace NeuralNetwork.Generic.Networks
                     var zL = neuron.Connections.OfType<IIncomingConnection>().Sum(i => i.FromNeuron.ActivationLevel * i.Weight) + neuron.Bias;
 
                     // The final neuron activation level with an applied activation function.
-                    neuron.ActivationLevel = ApplySigmoidFunction(zL);
+                    neuron.ActivationLevel = ApplyActivationFunction(zL);
                 }
             }
         }
@@ -267,13 +281,9 @@ namespace NeuralNetwork.Generic.Networks
         /// <param name="expectedOutputs">A list of the expected activation levels from the associated training iteration.</param>
         private void BackPropogateOutputs(IList<INetworkTrainingOutput> expectedOutputs)
         {
-            if (expectedOutputs == null)
-                throw new ArgumentNullException("expectedOutputs");
-
-            // Dictionary holding the derivative of the cost with respect to the activation of the previous neuron.
-            // This is used so that as we go right-to-left, we are able to retrieve the cost derivate of the previous 
-            // neuron on the right.
-            var dC0_daLPlus1Dict = new Dictionary<INeuron, double>();
+            // Dictionary holding the derivative of the cost with respect to the activation of the current neuron.
+            // This calculation is computed by summing the cost of all outgoing connections from this neuron.
+            var dC0_daLTotalDict = new Dictionary<INeuron, double>();
 
             foreach (var layer in Layers.OrderByDescending(l => l.SortOrder))
             {
@@ -283,25 +293,22 @@ namespace NeuralNetwork.Generic.Networks
                     var aL = neuron.ActivationLevel;
 
                     // The Intermediate value 'Z' --> the neuron's activation level without applying the activation function.
-                    var zL = ApplySigmoidFunctionInverse(neuron.ActivationLevel);
+                    var zL = ApplyActivationFunctionInverse(neuron.ActivationLevel);
 
                     // The derivative of the cost with respect to the activation of this neuron. 
                     // This calculation changes if the neuron is in the output layer.
-                    var dC0_daL = layer is OutputLayer ? 2.0 * (aL - expectedOutputs.First(o => o.NeuronId == neuron.Id).ExpectedActivationLevel) : dC0_daLPlus1Dict[neuron];
+                    var dC0_daL = layer is OutputLayer ? 2.0 * Math.Abs(aL - expectedOutputs.First(o => o.NeuronId == neuron.Id).ExpectedActivationLevel) : dC0_daLTotalDict[neuron];
 
                     // The derivative of the activation level of this neuron with respect to Z.
-                    var daL_dzL = ApplySigmoidFunctionDerivative(zL);
+                    var daL_dzL = ApplyActivationFunctionDerivative(zL);
 
                     // The derivative of the cost with respect to the bias of this neuron.
                     // Update the bias of the neuron using this calculation.
                     var dC0_dbL = 1.0 * daL_dzL * dC0_daL;
                     neuron.Bias -= dC0_dbL * _dampingRate;
 
-                    // The derivative of the cost with respect to the activation of the neuron on the left.
-                    // To calculate this, compute the derivative of EACH incoming connection and add it 
-                    // to this total. The derivative of the sum is the sum of the derivatives.
-                    var dC0_daLMinus1Total = 0.0;
-
+                    // Foreach incoming connection, compute the derivative of the cost with respect to the 
+                    // activation of the neuron on the left.
                     foreach (var incomingConnection in neuron.Connections.OfType<IIncomingConnection>())
                     {
                         // The derivative of Z with respect to the incoming connection weight.
@@ -314,14 +321,18 @@ namespace NeuralNetwork.Generic.Networks
                         // Update the weight of the incoming connection with this calculation.
                         var dzL_daLMinus1 = incomingConnection.Weight;
                         incomingConnection.Weight -= dC0_dwL * _dampingRate;
-
+                        incomingConnection.FromNeuron.Connections.OfType<IOutgoingConnection>().Where(c => c.ToNeuron == neuron).First().Weight = incomingConnection.Weight;
+                        
                         // The derivative of the cost with respect to the activation of the incoming connection neuron. 
                         // Add is value to the total derivative calculation for this neuron.
                         var dC0_daLMinus1 = dzL_daLMinus1 * daL_dzL * dC0_daL;
-                        dC0_daLMinus1Total += dC0_daLMinus1;
-                    }
 
-                    dC0_daLPlus1Dict.Add(neuron, dC0_daLMinus1Total);
+                        // Update the cost derivative for the incoming neuron.
+                        if (!dC0_daLTotalDict.ContainsKey(incomingConnection.FromNeuron))
+                            dC0_daLTotalDict.Add(incomingConnection.FromNeuron, dC0_daLMinus1);
+                        else
+                            dC0_daLTotalDict[incomingConnection.FromNeuron] += dC0_daLMinus1;
+                    }
                 }
             }
         }
@@ -331,10 +342,16 @@ namespace NeuralNetwork.Generic.Networks
         /// </summary>
         /// <param name="value">The value that will be inserted into the sigmoid function.</param>
         /// <returns>Returns the output of the sigmoid function using the supplied value.</returns>
-        private double ApplySigmoidFunction(double value)
+        private double ApplyActivationFunction(double value)
         {
-            // Possibly send this to parent abstract class..
-            return (1.0 / (1 + Math.Exp(-1.0 * value)));
+            // Sigmoid function
+            //return (1.0 / (1 + Math.Exp(-1.0 * value)));
+
+            // ReLu function
+            return value > 0.0 ? value : 0.0;
+
+            // Leaky ReLu function
+            //return value > 0.0 ? value : 0.01 * value;
         }
 
         /// <summary>
@@ -342,10 +359,16 @@ namespace NeuralNetwork.Generic.Networks
         /// </summary>
         /// <param name="value">The value to plug into the inverse sigmoid function.</param>
         /// <returns>Returns the inverse value of the sigmoid function.</returns>
-        private double ApplySigmoidFunctionInverse(double value)
+        private double ApplyActivationFunctionInverse(double value)
         {
-            // check this calculation.
-            return Math.Log(value / (1 - value));
+            // Sigmoid function
+            //return Math.Log(value / (1 - value));
+
+            // ReLu function
+            return value > 0.0 ? value : 0.0;
+
+            // Leaky ReLu function
+            //return value > 0.0 ? value : value / 0.01;
         }
 
         /// <summary>
@@ -353,11 +376,18 @@ namespace NeuralNetwork.Generic.Networks
         /// </summary>
         /// <param name="value">The value to plug into the derivative of the sigmoid function.</param>
         /// <returns>Returns the sigmoid derivative output for the specified <paramref name="value"/>.</returns>
-        private double ApplySigmoidFunctionDerivative(double value)
+        private double ApplyActivationFunctionDerivative(double value)
         {
-            return value * (1.0 - value);
+            // Sigmoid function
+            //return value * (1.0 - value);
+
+            // ReLu function method. Another method is to return the sigmoid function
+            return value > 0.0 ? 1.0 : 0.0;
+
+            // Leaky ReLu function
+            //return value > 0.0 ? 1.0 : 0.01;
         }
-        
+
         /// <summary>
         /// Validates the network by checking all layers, neurons, and connections. Exception will be thrown if an invalid configuration is present.
         /// </summary>
@@ -467,15 +497,15 @@ namespace NeuralNetwork.Generic.Networks
         }
 
         /// <summary>
-        /// Validates each of the dataset entries has valid input and outputs for this network.
+        /// Validates each of the training entries has valid input and outputs for this network.
         /// </summary>
-        /// <param name="dataset">The dataset that will be applied to this network.</param>
-        protected void ValidateTrainingDataset(INetworkTrainingDataset dataset)
+        /// <param name="trainingIterations">The training iterations that will be applied to this network.</param>
+        protected void ValidateTrainingIterations(IEnumerable<INetworkTrainingIteration> trainingIterations)
         {
-            if (dataset == null || !dataset.TestCases.Any())
-                throw new ArgumentNullException("dataset");
+            if (trainingIterations == null || !trainingIterations.Any())
+                throw new ArgumentNullException("trainingIterations");
 
-            foreach (var entry in dataset.TestCases)
+            foreach (var entry in trainingIterations)
             {
                 ValidateNetworkInputs(entry.Inputs);
                 ValidateNetworkOutputs(entry.Outputs);

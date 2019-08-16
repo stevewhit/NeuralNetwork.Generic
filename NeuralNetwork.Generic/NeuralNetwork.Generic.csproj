@@ -46,7 +46,6 @@
     <Compile Include="Connections\NeuronConnectionBase.cs" />
     <Compile Include="Datasets\NetworkInput.cs" />
     <Compile Include="Datasets\NetworkOutput.cs" />
-    <Compile Include="Datasets\NetworkTrainingDataset.cs" />
     <Compile Include="Datasets\NetworkTrainingIteration.cs" />
     <Compile Include="Datasets\NetworkTrainingOutput.cs" />
     <Compile Include="Datasets\NetworkTrainingInput.cs" />

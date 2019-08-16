@@ -12,7 +12,7 @@ namespace NeuralNetwork.Generic.Datasets
         double ActivationLevel { get; set; }
     }
 
-    public class NetworkInput
+    public class NetworkInput : INetworkInput
     {
         public int NeuronId { get; set; }
         public double ActivationLevel { get; set; }

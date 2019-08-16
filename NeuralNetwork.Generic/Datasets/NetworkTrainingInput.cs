@@ -11,7 +11,7 @@ namespace NeuralNetwork.Generic.Datasets
 
     }
 
-    public class NetworkTrainingInput : NetworkInput
+    public class NetworkTrainingInput : NetworkInput, INetworkTrainingInput
     {
         
     }

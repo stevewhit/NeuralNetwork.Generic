@@ -11,7 +11,7 @@ namespace NeuralNetwork.Generic.Datasets
         double ExpectedActivationLevel { get; set; }
     }
 
-    public class NetworkTrainingOutput : NetworkOutput
+    public class NetworkTrainingOutput : NetworkOutput, INetworkTrainingOutput
     {
         public double ExpectedActivationLevel { get; set; }
     }

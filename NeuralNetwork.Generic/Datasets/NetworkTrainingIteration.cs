@@ -18,5 +18,11 @@ namespace NeuralNetwork.Generic.Datasets
         public IList<INetworkTrainingInput> Inputs { get; set; }
         public IList<INetworkTrainingOutput> Outputs { get; set; }
         public double TrainingCost { get; set; }
+
+        public NetworkTrainingIteration()
+        {
+            Inputs = new List<INetworkTrainingInput>();
+            Outputs = new List<INetworkTrainingOutput>();
+        }
     }
 }
