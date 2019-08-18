@@ -62,7 +62,6 @@
     <Compile Include="Layers\OutputLayerTest.cs" />
     <Compile Include="Networks\NeuralNetworkBaseTest.cs" />
     <Compile Include="Networks\DFFNeuralNetworkTest.cs" />
-    <Compile Include="Networks\FakeNNApp.cs" />
     <Compile Include="Neurons\InputNeuronTest.cs" />
     <Compile Include="Neurons\HiddenNeuronTest.cs" />
     <Compile Include="Neurons\OutputNeuronTest.cs" />
