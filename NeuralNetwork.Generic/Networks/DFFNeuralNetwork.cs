@@ -520,11 +520,7 @@ namespace NeuralNetwork.Generic.Networks
         /// <returns>Returns the neuron in the <paramref name="layer"/> with the matching <paramref name="neuronId"/> if one exists; otherwise null.</returns>
         private INeuron GetNeuronById(int neuronId, INetworkLayer layer)
         {
-            foreach (var neuron in layer.Neurons)
-                if (neuron.Id == neuronId)
-                    return neuron;
-
-            return null;
+            return layer.Neurons.FirstOrDefault(n => n.Id == neuronId);
         }
     }
 }
