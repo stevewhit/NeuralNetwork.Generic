@@ -47,7 +47,7 @@ namespace NeuralNetwork.Generic.Networks
         /// <summary>
         /// The learning rate of the network
         /// </summary>
-        private const double _dampingRate = 0.01;
+        private const double _dampingRate = 0.1;
         
         public DFFNeuralNetwork()
         {
@@ -207,7 +207,7 @@ namespace NeuralNetwork.Generic.Networks
                 t.ActivationLevel = neuronOutputs.First(n => n.NeuronId == t.NeuronId).ActivationLevel;
             });
 
-            return testCase.Outputs.Average(t => Math.Pow(t.ActivationLevel - t.ExpectedActivationLevel, 2));
+            return testCase.Outputs.Sum(t => Math.Pow(t.ActivationLevel - t.ExpectedActivationLevel, 2));
         }
 
         /// <summary>
@@ -292,20 +292,17 @@ namespace NeuralNetwork.Generic.Networks
                     // The activation level for this neuron   
                     var aL = neuron.ActivationLevel;
 
-                    // The Intermediate value 'Z' --> the neuron's activation level without applying the activation function.
-                    var zL = ApplyActivationFunctionInverse(neuron.ActivationLevel);
-
                     // The derivative of the cost with respect to the activation of this neuron. 
                     // This calculation changes if the neuron is in the output layer.
-                    var dC0_daL = layer is OutputLayer ? 2.0 * Math.Abs(aL - expectedOutputs.First(o => o.NeuronId == neuron.Id).ExpectedActivationLevel) : dC0_daLTotalDict[neuron];
+                    var dC0_daL = layer is OutputLayer ? (2.0 * (aL - expectedOutputs.First(o => o.NeuronId == neuron.Id).ExpectedActivationLevel)) : dC0_daLTotalDict[neuron];
 
                     // The derivative of the activation level of this neuron with respect to Z.
-                    var daL_dzL = ApplyActivationFunctionDerivative(zL);
+                    var daL_dzL = ApplyActivationFunctionDerivative(aL);
 
                     // The derivative of the cost with respect to the bias of this neuron.
                     // Update the bias of the neuron using this calculation.
-                    var dC0_dbL = 1.0 * daL_dzL * dC0_daL;
-                    neuron.Bias -= dC0_dbL * _dampingRate;
+                    //var dC0_dbL = 1.0 * daL_dzL * dC0_daL;
+                    //neuron.Bias -= dC0_dbL * _dampingRate;
 
                     // Foreach incoming connection, compute the derivative of the cost with respect to the 
                     // activation of the neuron on the left.
@@ -345,30 +342,7 @@ namespace NeuralNetwork.Generic.Networks
         private double ApplyActivationFunction(double value)
         {
             // Sigmoid function
-            //return (1.0 / (1 + Math.Exp(-1.0 * value)));
-
-            // ReLu function
-            return value > 0.0 ? value : 0.0;
-
-            // Leaky ReLu function
-            //return value > 0.0 ? value : 0.01 * value;
-        }
-
-        /// <summary>
-        /// Calculates the inverse of the sigmoid function for a specified <paramref name="value"/>.
-        /// </summary>
-        /// <param name="value">The value to plug into the inverse sigmoid function.</param>
-        /// <returns>Returns the inverse value of the sigmoid function.</returns>
-        private double ApplyActivationFunctionInverse(double value)
-        {
-            // Sigmoid function
-            //return Math.Log(value / (1 - value));
-
-            // ReLu function
-            return value > 0.0 ? value : 0.0;
-
-            // Leaky ReLu function
-            //return value > 0.0 ? value : value / 0.01;
+            return (1.0 / (1 + Math.Exp(-1.0 * value)));
         }
 
         /// <summary>
@@ -379,13 +353,7 @@ namespace NeuralNetwork.Generic.Networks
         private double ApplyActivationFunctionDerivative(double value)
         {
             // Sigmoid function
-            //return value * (1.0 - value);
-
-            // ReLu function method. Another method is to return the sigmoid function
-            return value > 0.0 ? 1.0 : 0.0;
-
-            // Leaky ReLu function
-            //return value > 0.0 ? 1.0 : 0.01;
+            return value * (1.0 - value);
         }
 
         /// <summary>

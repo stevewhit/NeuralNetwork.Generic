@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NeuralNetwork.Generic.Connections;
 using NeuralNetwork.Generic.Neurons;

@@ -763,6 +763,12 @@ namespace NeuralNetwork.Generic.Test.Networks
             Assert.IsTrue(inputNeuron.ActivationLevel == .75);
         }
 
+        private double ApplyActivationFunction(double value)
+        {
+            // Sigmoid function
+            return (1.0 / (1 + Math.Exp(-1.0 * value)));
+        }
+
         [TestMethod]
         public void ApplyInputs_WithValidNetwork_PropogatesNetworkInputs()
         {
@@ -798,10 +804,12 @@ namespace NeuralNetwork.Generic.Test.Networks
             IOutputNeuron output1After = outputLayer.Neurons.First() as IOutputNeuron;
             IOutputNeuron output2After = outputLayer.Neurons.ToList()[1] as IOutputNeuron;
 
-            var h1Activation = ((.75 * input1Hidden1Conn.Weight) + hidden1.Bias);
-            var h2Activation = ((.75 * input1Hidden2Conn.Weight) + hidden2.Bias);
-            var o1Activation = (h1Activation * hidden1Output1Conn.Weight) + (h2Activation * hidden2Output1Conn.Weight) + output1.Bias;
-            var o2Activation = (h1Activation * hidden1Output2Conn.Weight) + (h2Activation * hidden2Output2Conn.Weight) + output2.Bias;
+            // sigmoid function : (1.0 / (1 + Math.Exp(-1.0 * value)));
+
+            var h1Activation = ApplyActivationFunction((.75 * input1Hidden1Conn.Weight) + hidden1.Bias);
+            var h2Activation = ApplyActivationFunction((.75 * input1Hidden2Conn.Weight) + hidden2.Bias);
+            var o1Activation = ApplyActivationFunction((h1Activation * hidden1Output1Conn.Weight) + (h2Activation * hidden2Output1Conn.Weight) + output1.Bias);
+            var o2Activation = ApplyActivationFunction((h1Activation * hidden1Output2Conn.Weight) + (h2Activation * hidden2Output2Conn.Weight) + output2.Bias);
 
             // Assert
             Assert.IsTrue(o1Activation == output1After.ActivationLevel);

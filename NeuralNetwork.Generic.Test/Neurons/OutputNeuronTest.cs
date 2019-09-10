@@ -22,6 +22,25 @@ namespace NeuralNetwork.Generic.Test.Neurons
             _outputNeuron = new OutputNeuron();
         }
 
+        #region Testing Properties
+
+        [TestMethod]
+        public void GetSetProperties()
+        {
+            // Arrange
+            _outputNeuron.Id = 3;
+            _outputNeuron.ActivationLevel = .75;
+            _outputNeuron.Bias = .33;
+            _outputNeuron.Description = "Fake Neuron";
+
+            // Assert
+            Assert.IsTrue(_outputNeuron.Id == 3);
+            Assert.IsTrue(_outputNeuron.ActivationLevel == .75);
+            Assert.IsTrue(_outputNeuron.Bias == .33);
+            Assert.IsTrue(_outputNeuron.Description == "Fake Neuron");
+        }
+
+        #endregion
         #region Testing OutputNeuron()...
 
         [TestMethod]
